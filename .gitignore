@@ -1,0 +1,75 @@
+# macOS
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+expo-debug.log*
+
+# Node
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Metro
+.metro-health-check*
+
+# Build output
+android/app/build/
+android/build/
+ios/build/
+
+# Native generated folders (if using prebuild)
+android/.gradle/
+android/.cxx/
+android/local.properties
+
+# Android
+*.apk
+*.aab
+
+# iOS
+*.xcworkspace
+*.xcuserstate
+*.xcuserdata/
+Pods/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Yarn
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# npm
+package-lock.json
+
+# pnpm
+pnpm-lock.yaml

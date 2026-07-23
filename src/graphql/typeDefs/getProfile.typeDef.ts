@@ -8,6 +8,6 @@ import gql from 'graphql-tag';
 
 export const getProfileTypeDef = gql`
   extend type Query {
-    getProfile: Staff!
+    getProfile: Profile!
   }
 `;

@@ -7,25 +7,25 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-export class Period extends Model {
-  public periodId!: number;
-  public periodNumber!: number;
-  public startTime!: string;
-  public endTime!: string;
+export class Section extends Model {
+  public sectionId!: number;
+  public courseId!: number;
+  public sectionName!: string;
+  public capacity!: number;
   public isActive!: string;
 }
 
-Period.init(
+Section.init(
   {
-    periodId: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    periodNumber: { type: DataTypes.INTEGER, allowNull: false, unique: true },
-    startTime: { type: DataTypes.TIME, allowNull: false },
-    endTime: { type: DataTypes.TIME, allowNull: false },
+    sectionId: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    courseId: { type: DataTypes.INTEGER, allowNull: false },
+    sectionName: { type: DataTypes.STRING(10), allowNull: false },
+    capacity: { type: DataTypes.INTEGER, defaultValue: 60 },
     isActive: { type: DataTypes.ENUM('YES', 'NO'), defaultValue: 'YES' },
   },
   {
     sequelize,
-    tableName: 'Period',
+    tableName: 'Section',
     timestamps: true,
   },
 );

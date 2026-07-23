@@ -8,7 +8,6 @@ import express, { type Express } from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import Redis from 'ioredis';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
@@ -20,15 +19,12 @@ import logger from './utils/logger';
 import { sequelize } from './config/database';
 import { authenticateJWT } from './middlewares/authenticateJwt.middleware';
 import { bodySizeLimit, helmetMiddleware, httpsRedirect, rate_limiter } from './middlewares';
-import { ValkeyQueueService } from './services/valkeyQueue.service';
-import { DeviceToken, Notification } from './models';
-import { AttendanceReminderService } from './services/attendanceReminder.service';
+import './models'; // Import models to ensure associations are registered before sync
 
 const restApp = express();
 const graphqlApp = express();
 
 let dbConnection: mysql.Connection;
-let valkeyClient: Redis;
 
 async function connectMySQL() {
   try {
@@ -54,29 +50,15 @@ async function connectMySQL() {
     process.exit(1);
   }
 }
-async function connectValkey() {
-  valkeyClient = new Redis({
-    host: config.valKeyHost,
-    port: Number(config.valKeyPort),
-    username: config.valKeyUser,
-    password: config.valKeyPassword,
-    tls: {},
-  });
-
-  valkeyClient.on('error', (err) => logger.error('Valkey error:', err));
-
-  logger.info('🚀 VALKEY Server Connected successfully');
-  return valkeyClient;
-}
 
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
-    await Notification.sync();
-    await DeviceToken.sync();
-    logger.info('🚀 Sequelize connected successfully');
+    logger.info('🚀 Sequelize authenticated successfully');
 
-    logger.info('🚀 Tables synced successfully');
+    // Automatically sync models & create tables if they do not exist
+    await sequelize.sync({ alter: true });
+    logger.info('🚀 Database tables synced successfully');
   } catch (error) {
     logger.error('❌ Sequelize sync error:', error);
     process.exit(1);
@@ -93,7 +75,7 @@ function applyCommonMiddleware(app: Express) {
 
   app.use(
     cors({
-      origin: '*',
+      origin: true,
       credentials: true,
     }),
   );
@@ -150,22 +132,8 @@ async function startServer() {
   });
 }
 
-async function startQueueWorkers() {
-  if (!config.valKeyHost || !config.valKeyPort) {
-    logger.warn('Valkey configuration missing. Queue workers were not started.');
-    return;
-  }
-
-  await ValkeyQueueService.getInstance().startWorkers();
-  logger.info('🚀 Queue Workers started successfully');
-}
-
 (async function bootstrap() {
   await connectMySQL();
-  await connectValkey();
   await syncDatabase();
-
   await startServer();
-  await startQueueWorkers();
-  AttendanceReminderService.getInstance().start();
 })();

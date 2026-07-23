@@ -21,19 +21,19 @@ export class AuthController {
 
       return res.status(200).json(result);
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message || 'Failed to send OTP' });
     }
   }
 
   static async googleLogin(req: Request, res: Response) {
     try {
-      const { email } = req.body;
+      const { googleToken, idToken, email } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ message: 'Email is required' });
+      if (!googleToken && !idToken && !email) {
+        return res.status(400).json({ message: 'Google token or email is required' });
       }
 
-      const result = await AuthService.googleLogin(email);
+      const result = await AuthService.googleLogin({ googleToken, idToken, email });
 
       return res.status(200).json(result);
     } catch (error: any) {
@@ -55,7 +55,7 @@ export class AuthController {
 
       return res.status(200).json(result);
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: error.message || 'OTP verification failed' });
     }
   }
 }

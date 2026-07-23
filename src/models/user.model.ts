@@ -4,83 +4,103 @@ Unauthorized copying of this file, via any medium, is strictly prohibited.
 Proprietary and confidential.  
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
-
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
+import { Role } from './role.model';
 
-interface UserAttributes {
-  id: number;
-  email: string;
-  otp?: string | null;
-  otp_expiry?: Date | null;
-  status: 'active' | 'inactive';
-  created_at?: Date;
-  updated_at?: Date;
-}
+export class User extends Model {
+  public userId!: number;
+  public companyId?: number;
+  public departmentId?: number;
+  public userNumber!: string;
+  public userName?: string;
+  public userMail!: string;
+  public roleId!: number;
+  public password?: string;
+  public status!: 'Active' | 'Inactive';
+  public profileImage?: string;
+  public resetPasswordToken?: string;
+  public resetPasswordExpires?: Date;
+  public createdBy?: number;
+  public updatedBy?: number;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-interface UserCreationAttributes
-  extends Optional<
-    UserAttributes,
-    'id' | 'otp' | 'otp_expiry' | 'status' | 'created_at' | 'updated_at'
-  > {}
-
-export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: number;
-  public email!: string;
-  public otp!: string | null;
-  public otp_expiry!: Date | null;
-  public status!: 'active' | 'inactive';
-
-  public readonly created_at!: Date;
-  public readonly updated_at!: Date;
-  roles: any;
+  public role?: Role;
+  public staffDetails?: any;
 }
 
 User.init(
   {
-    id: {
+    userId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-
-    email: {
+    companyId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    departmentId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    userNumber: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    userName: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    userMail: {
       type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
-
-    otp: {
+    roleId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'roles',
+        key: 'roleId',
+      },
+    },
+    password: {
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-
-    otp_expiry: {
+    status: {
+      type: DataTypes.ENUM('Active', 'Inactive'),
+      defaultValue: 'Active',
+    },
+    profileImage: {
+      type: DataTypes.STRING(500),
+      defaultValue: '/uploads/default.jpg',
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+    resetPasswordExpires: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-
-    status: {
-      type: DataTypes.ENUM('active', 'inactive'),
-      allowNull: false,
-      defaultValue: 'active',
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+    updatedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   },
   {
     sequelize,
     tableName: 'users',
-    timestamps: false,
+    timestamps: true,
   },
 );

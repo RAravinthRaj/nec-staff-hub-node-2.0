@@ -4,60 +4,30 @@ Unauthorized copying of this file, via any medium, is strictly prohibited.
 Proprietary and confidential.  
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
-
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-interface SemesterAttributes {
-  id: number;
-  semester: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-interface SemesterCreationAttributes
-  extends Optional<SemesterAttributes, 'id' | 'created_at' | 'updated_at'> {}
-
-export class Semester
-  extends Model<SemesterAttributes, SemesterCreationAttributes>
-  implements SemesterAttributes
-{
-  public id!: number;
-  public semester!: string;
-
-  public readonly created_at!: Date;
-  public readonly updated_at!: Date;
+export class Semester extends Model {
+  public semesterId!: number;
+  public batchId!: number;
+  public semesterNumber!: number;
+  public startDate!: string;
+  public endDate!: string;
+  public isActive!: string;
 }
 
 Semester.init(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-
-    semester: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      unique: true,
-    },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
-    },
+    semesterId: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    batchId: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
+    semesterNumber: { type: DataTypes.INTEGER, allowNull: false },
+    startDate: { type: DataTypes.DATEONLY, allowNull: false, defaultValue: '2025-06-01' },
+    endDate: { type: DataTypes.DATEONLY, allowNull: false, defaultValue: '2025-12-31' },
+    isActive: { type: DataTypes.ENUM('YES', 'NO'), defaultValue: 'YES' },
   },
   {
     sequelize,
-    tableName: 'semesters',
-    timestamps: false,
+    tableName: 'Semester',
+    timestamps: true,
   },
 );

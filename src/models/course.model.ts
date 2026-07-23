@@ -4,80 +4,40 @@ Unauthorized copying of this file, via any medium, is strictly prohibited.
 Proprietary and confidential.  
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
-
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-interface CourseAttributes {
-  id: number;
-  course_code: string;
-  course_name: string;
-  department_id: number;
-  semester_id: number;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-interface CourseCreationAttributes
-  extends Optional<CourseAttributes, 'id' | 'created_at' | 'updated_at'> {}
-
-export class Course
-  extends Model<CourseAttributes, CourseCreationAttributes>
-  implements CourseAttributes
-{
-  public id!: number;
-  public course_code!: string;
-  public course_name!: string;
-  public department_id!: number;
-  public semester_id!: number;
-
-  public readonly created_at!: Date;
-  public readonly updated_at!: Date;
+export class Course extends Model {
+  public courseId!: number;
+  public courseCode!: string;
+  public semesterId!: number;
+  public courseTitle!: string;
+  public category!: string;
+  public type!: string;
+  public credits!: number;
+  public isActive!: string;
 }
 
 Course.init(
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
+    courseId: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    courseCode: { type: DataTypes.STRING(20), allowNull: false },
+    semesterId: { type: DataTypes.INTEGER, allowNull: false },
+    courseTitle: { type: DataTypes.STRING(255), allowNull: false },
+    category: {
+      type: DataTypes.ENUM('HSMC', 'BSC', 'ESC', 'PEC', 'OEC', 'EEC', 'PCC', 'MC'),
+      defaultValue: 'PCC',
     },
-
-    course_code: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
+    type: {
+      type: DataTypes.ENUM('THEORY', 'INTEGRATED', 'PRACTICAL', 'EXPERIENTIAL LEARNING'),
+      defaultValue: 'THEORY',
     },
-
-    course_name: {
-      type: DataTypes.STRING(150),
-      allowNull: false,
-    },
-
-    department_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-
-    semester_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
-    },
+    credits: { type: DataTypes.INTEGER, defaultValue: 3 },
+    isActive: { type: DataTypes.ENUM('YES', 'NO'), defaultValue: 'YES' },
   },
   {
     sequelize,
-    tableName: 'courses',
-    timestamps: false,
+    tableName: 'Course',
+    timestamps: true,
   },
 );

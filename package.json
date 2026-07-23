@@ -17,7 +17,6 @@
   "scripts": {
     "lint": "eslint src --ext .ts",
     "build": "tsc && mkdir -p dist/templates && cp -r src/templates/* dist/templates/",
-    "normalize:leave-documents": "ts-node -r tsconfig-paths/register src/scripts/normalizeLeaveDocuments.ts",
     "sync:oa-attendance-table": "ts-node -r tsconfig-paths/register src/scripts/syncOaAttendanceTable.ts",
     "start": "node dist/server.js",
     "dev": "nodemon --watch \"src/**/*.ts\" --exec \"ts-node\" src/server.ts",

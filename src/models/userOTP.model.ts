@@ -7,34 +7,42 @@ Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-export class Role extends Model {
-  public roleId!: number;
-  public roleName!: string;
-  public description?: string;
+export class UserOTP extends Model {
+  public id!: number;
+  public userId!: number;
+  public otp!: string;
+  public expiresAt!: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
 
-Role.init(
+UserOTP.init(
   {
-    roleId: {
+    id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    roleName: {
-      type: DataTypes.STRING(100),
+    userId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
+      references: {
+        model: 'users',
+        key: 'userId',
+      },
     },
-    description: {
+    otp: {
       type: DataTypes.STRING(255),
-      allowNull: true,
+      allowNull: false,
+    },
+    expiresAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {
     sequelize,
-    tableName: 'roles',
+    tableName: 'user_otps',
     timestamps: true,
   },
 );

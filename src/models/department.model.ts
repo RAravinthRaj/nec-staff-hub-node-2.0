@@ -4,67 +4,41 @@ Unauthorized copying of this file, via any medium, is strictly prohibited.
 Proprietary and confidential.  
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
-
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/database';
 
-interface DepartmentAttributes {
-  id: number;
-  name: string;
-  abbreviation: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-interface DepartmentCreationAttributes
-  extends Optional<DepartmentAttributes, 'id' | 'created_at' | 'updated_at'> {}
-
-export class Department
-  extends Model<DepartmentAttributes, DepartmentCreationAttributes>
-  implements DepartmentAttributes
-{
-  public id!: number;
-  public name!: string;
-  public abbreviation!: string;
-
-  public readonly created_at!: Date;
-  public readonly updated_at!: Date;
+export class Department extends Model {
+  public departmentId!: number;
+  public departmentName!: string;
+  public departmentCode!: string;
+  public status!: 'Active' | 'Inactive';
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 Department.init(
   {
-    id: {
+    departmentId: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-
-    name: {
-      type: DataTypes.STRING(100),
+    departmentName: {
+      type: DataTypes.STRING(150),
       allowNull: false,
     },
-
-    abbreviation: {
-      type: DataTypes.STRING(10),
+    departmentCode: {
+      type: DataTypes.STRING(20),
       allowNull: false,
-      unique: true,
     },
-
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-    },
-
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: sequelize.literal('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+    status: {
+      type: DataTypes.ENUM('Active', 'Inactive'),
+      defaultValue: 'Active',
     },
   },
   {
     sequelize,
     tableName: 'departments',
-    timestamps: false,
+    timestamps: true,
   },
 );

@@ -4,75 +4,77 @@ Unauthorized copying of this file, via any medium, is strictly prohibited.
 Proprietary and confidential.  
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
-
-import { User } from './user.model';
 import { Role } from './role.model';
-import { UserRole } from './userRole.model';
-import { Staff } from './staff.model';
+import { User } from './user.model';
 import { Department } from './department.model';
+import { StaffDetails } from './staffDetails.model';
+import { StudentDetails } from './studentDetails.model';
+import { UserOTP } from './userOTP.model';
+import { Course } from './course.model';
+import { Section } from './section.model';
+import { StaffCourse } from './staffCourse.model';
+import { StudentCourse } from './studentCourse.model';
 import { Period } from './period.model';
 import { Semester } from './semester.model';
-import { Year } from './year.model';
-import { Student } from './student.model';
-import { Batch } from './batch.model';
-import { Course } from './course.model';
-import { CourseBatch } from './courseBatch.model';
-import { CourseBatchStudent } from './courseBatchStudents.model';
 import { Timetable } from './timetable.model';
-import { StudentOD } from './od.model';
-import { Attendance } from './attendance.model';
-import { OAAttendance } from './oaAttendance.model';
-import { Leave } from './leave.model';
-import { LeaveCategory } from './leaveCategory.model';
-import { LeaveBalance } from './leaveBalance.model';
-import { Notification } from './notification.model';
-import { DeviceToken } from './deviceToken.model';
+import { PeriodAttendance } from './periodAttendance.model';
 
-import {
-  userAssociations,
-  staffAssociations,
-  academicAssociations,
-  courseAssociations,
-  timetableAssociations,
-  studentAssociations,
-  leaveAssociations,
-  notificationAssociations,
-} from './associations';
+// User & Role
+User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
+Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });
 
-const applyAssociations = () => {
-  userAssociations();
-  staffAssociations();
-  academicAssociations();
-  courseAssociations();
-  timetableAssociations();
-  studentAssociations();
-  leaveAssociations();
-  notificationAssociations();
-};
+// Department
+User.belongsTo(Department, { foreignKey: 'departmentId', as: 'department' });
+Department.hasMany(User, { foreignKey: 'departmentId', as: 'users' });
 
-applyAssociations();
+StaffDetails.belongsTo(Department, { foreignKey: 'departmentId', as: 'department' });
+Department.hasMany(StaffDetails, { foreignKey: 'departmentId', as: 'staffMembers' });
+
+// User Profile Details
+User.hasOne(StaffDetails, { foreignKey: 'Userid', as: 'staffDetails' });
+StaffDetails.belongsTo(User, { foreignKey: 'Userid', as: 'user' });
+
+User.hasOne(StudentDetails, { foreignKey: 'Userid', as: 'studentDetails' });
+StudentDetails.belongsTo(User, { foreignKey: 'Userid', as: 'user' });
+
+User.hasOne(UserOTP, { foreignKey: 'userId', as: 'userOtp' });
+UserOTP.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Timetable & Academic Associations
+Timetable.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+Timetable.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
+Timetable.belongsTo(Period, { foreignKey: 'periodNumber', targetKey: 'periodNumber', as: 'period' });
+Timetable.belongsTo(Semester, { foreignKey: 'semesterId', as: 'semester' });
+Timetable.belongsTo(Department, { foreignKey: 'departmentId', as: 'department' });
+
+StaffCourse.belongsTo(User, { foreignKey: 'Userid', as: 'user' });
+StaffCourse.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+StaffCourse.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
+
+StudentCourse.belongsTo(StudentDetails, { foreignKey: 'regno', targetKey: 'registerNumber', as: 'studentDetails' });
+StudentCourse.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+StudentCourse.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
+
+// PeriodAttendance Associations
+PeriodAttendance.belongsTo(StudentDetails, { foreignKey: 'regno', targetKey: 'registerNumber', as: 'studentDetails' });
+PeriodAttendance.belongsTo(User, { foreignKey: 'staffId', as: 'staff' });
+PeriodAttendance.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
+PeriodAttendance.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
+PeriodAttendance.belongsTo(Department, { foreignKey: 'departmentId', as: 'department' });
 
 export {
-  User,
   Role,
-  UserRole,
-  Staff,
+  User,
   Department,
+  StaffDetails,
+  StudentDetails,
+  UserOTP,
+  Course,
+  Section,
+  StaffCourse,
+  StudentCourse,
   Period,
   Semester,
-  Year,
-  Student,
-  Batch,
-  Course,
-  CourseBatch,
-  CourseBatchStudent,
   Timetable,
-  StudentOD,
-  Attendance,
-  OAAttendance,
-  Leave,
-  LeaveCategory,
-  LeaveBalance,
-  Notification,
-  DeviceToken,
+  PeriodAttendance,
 };

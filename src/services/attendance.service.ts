@@ -5,6 +5,7 @@ Proprietary and confidential.
 Written by Aravinth Raj R <aravinthr235@gmail.com>, 2025.
 */
 import { PeriodAttendance, StudentDetails, Timetable, User, StaffDetails } from '../models';
+import { Op } from 'sequelize';
 
 export class AttendanceService {
   private static formatStatus(inputStatus: string): 'P' | 'A' | 'OD' {
@@ -147,12 +148,27 @@ export class AttendanceService {
     const roleName = authUser.role || 'Staff';
     const isDeptAdmin = roleName === 'Department Admin' || roleName === 'HOD';
     const staffId = authUser.staffId || authUser.userId;
+    const targetDate = query.date || new Date().toISOString().split('T')[0];
 
     if (!isDeptAdmin) {
-      // Staff view: Only fetch tutees/wards assigned to this staffId (tutorId)
+      // Staff / Tutor view: Only fetch tutees/wards assigned to this staffId (tutorId)
       const students = await StudentDetails.findAll({
         where: { staffId },
         include: [{ model: User, as: 'user' }],
+        order: [['registerNumber', 'ASC']],
+      });
+
+      const regnos = students.map((s) => s.registerNumber);
+      const attendanceRecords = await PeriodAttendance.findAll({
+        where: {
+          regno: regnos,
+          attendanceDate: targetDate,
+        },
+      });
+
+      const statusMap: Record<string, string> = {};
+      attendanceRecords.forEach((rec) => {
+        statusMap[rec.regno] = rec.status === 'P' ? 'PRESENT' : rec.status === 'OD' ? 'ON_DUTY' : 'ABSENT';
       });
 
       return {
@@ -164,7 +180,7 @@ export class AttendanceService {
           studentName: s.studentName,
           batch: s.batch,
           semester: s.semester,
-          status: 'PRESENT',
+          status: statusMap[s.registerNumber] || 'ABSENT',
         })),
       };
     }
@@ -174,7 +190,7 @@ export class AttendanceService {
     const limit = Math.max(1, Number(query.limit || 10));
     const offset = (page - 1) * limit;
 
-    const hasFilters = query.departmentId || query.sectionId || query.date || query.batch || query.search;
+    const hasFilters = query.departmentId || query.year || query.sectionId || query.date || query.batch || query.search;
     if (!hasFilters) {
       return {
         isDeptAdmin: true,
@@ -191,11 +207,55 @@ export class AttendanceService {
     if (query.departmentId) whereClause.departmentId = query.departmentId;
     if (query.batch) whereClause.batch = query.batch;
 
-    const { count, rows } = await StudentDetails.findAndCountAll({
+    // Year to Semester mapping: 2nd year -> [3, 4], 3rd year -> [5, 6], 4th year -> [7, 8]
+    const yearVal = String(query.year || '').trim();
+    if (yearVal) {
+      if (yearVal === '2' || yearVal.includes('2')) {
+        whereClause.semester = ['3', '4', 'III', 'IV', 3, 4];
+      } else if (yearVal === '3' || yearVal.includes('3')) {
+        whereClause.semester = ['5', '6', 'V', 'VI', 5, 6];
+      } else if (yearVal === '4' || yearVal.includes('4')) {
+        whereClause.semester = ['7', '8', 'VII', 'VIII', 7, 8];
+      }
+    }
+
+    if (query.search) {
+      whereClause[Op.or] = [
+        { registerNumber: { [Op.like]: `%${query.search}%` } },
+        { studentName: { [Op.like]: `%${query.search}%` } },
+      ];
+    }
+
+    let { count, rows } = await StudentDetails.findAndCountAll({
       where: whereClause,
       limit,
       offset,
       order: [['registerNumber', 'ASC']],
+    });
+
+    // Fallback if year/semester filter returned 0 rows
+    if (count === 0 && query.departmentId) {
+      const fallback = await StudentDetails.findAndCountAll({
+        where: { departmentId: query.departmentId },
+        limit,
+        offset,
+        order: [['registerNumber', 'ASC']],
+      });
+      count = fallback.count;
+      rows = fallback.rows;
+    }
+
+    const regnos = rows.map((s) => s.registerNumber);
+    const attendanceRecords = await PeriodAttendance.findAll({
+      where: {
+        regno: regnos,
+        attendanceDate: targetDate,
+      },
+    });
+
+    const statusMap: Record<string, string> = {};
+    attendanceRecords.forEach((rec) => {
+      statusMap[rec.regno] = rec.status === 'P' ? 'PRESENT' : rec.status === 'OD' ? 'ON_DUTY' : 'ABSENT';
     });
 
     return {
@@ -210,7 +270,7 @@ export class AttendanceService {
         studentName: s.studentName,
         batch: s.batch,
         semester: s.semester,
-        status: 'PRESENT',
+        status: statusMap[s.registerNumber] || 'ABSENT',
       })),
     };
   }

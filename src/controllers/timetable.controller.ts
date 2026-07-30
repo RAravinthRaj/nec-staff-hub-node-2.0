@@ -13,8 +13,9 @@ export class TimetableController {
       const authUser = (req as any).user;
       const userId = authUser?.userId || authUser?.id || 1;
       const dayOfWeek = (req.query.day as string) || 'MON';
+      const date = (req.query.date as string) || undefined;
 
-      const schedules = await TimetableService.getStaffTimetable(userId, dayOfWeek);
+      const schedules = await TimetableService.getStaffTimetable(userId, dayOfWeek, date);
       return res.status(200).json({ schedules });
     } catch (error: any) {
       return res.status(400).json({ message: error.message || 'Failed to fetch timetable' });

@@ -57,7 +57,7 @@ async function syncDatabase() {
     logger.info('🚀 Sequelize authenticated successfully');
 
     // Automatically sync models & create tables if they do not exist
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     logger.info('🚀 Database tables synced successfully');
   } catch (error) {
     logger.error('❌ Sequelize sync error:', error);

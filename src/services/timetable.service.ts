@@ -19,8 +19,9 @@ export class TimetableService {
     return 'IV';
   }
 
-  static async getStaffTimetable(userId: number, dayOfWeek: string) {
+  static async getStaffTimetable(userId: number, dayOfWeek: string, date?: string) {
     const day = (dayOfWeek || 'MON').toUpperCase();
+    const targetDate = date || new Date().toISOString().split('T')[0];
 
     // 1. Fetch Staff info
     const user = await User.findByPk(userId, {
@@ -57,35 +58,61 @@ export class TimetableService {
       return [];
     }
 
-    // 4. Map to Frontend display structure
-    return timetableEntries.map((tt: any) => ({
-      id: tt.timetableId,
-      courseCode: tt.course?.courseCode || `CS${tt.courseId}`,
-      courseName: tt.course?.courseTitle || 'Subject Course',
-      subName: tt.course?.courseTitle || 'Subject Course',
-      startTime: tt.period?.startTime || '09:00:00',
-      endTime: tt.period?.endTime || '10:00:00',
-      batch: tt.section ? `CSE ${tt.section.sectionName}` : 'CSE A',
-      year: tt.semester ? this.getYearString(tt.semester.semesterNumber) : 'III',
-      faculty: staffName,
-      semester: tt.semester ? this.getRomanSemester(tt.semester.semesterNumber) : 'V',
-      courseBatchId: tt.timetableId,
-      periodId: tt.periodNumber,
-      courseId: tt.courseId,
-      sectionId: tt.sectionId || 1,
-    }));
+    // 4. Check if PeriodAttendance records exist for each timetable entry
+    const results = await Promise.all(
+      timetableEntries.map(async (tt: any) => {
+        const attendanceCount = await PeriodAttendance.count({
+          where: {
+            courseId: tt.courseId,
+            sectionId: tt.sectionId || 1,
+            periodNumber: tt.periodNumber,
+            attendanceDate: targetDate,
+          },
+        });
+
+        return {
+          id: tt.timetableId,
+          courseCode: tt.course?.courseCode || `CS${tt.courseId}`,
+          courseName: tt.course?.courseTitle || 'Subject Course',
+          subName: tt.course?.courseTitle || 'Subject Course',
+          startTime: tt.period?.startTime || '09:00:00',
+          endTime: tt.period?.endTime || '10:00:00',
+          batch: tt.section ? `CSE ${tt.section.sectionName}` : 'CSE A',
+          year: tt.semester ? this.getYearString(tt.semester.semesterNumber) : 'III',
+          faculty: staffName,
+          semester: tt.semester ? this.getRomanSemester(tt.semester.semesterNumber) : 'V',
+          courseBatchId: tt.timetableId,
+          periodId: tt.periodNumber,
+          courseId: tt.courseId,
+          sectionId: tt.sectionId || 1,
+          isAttendanceMarked: attendanceCount > 0,
+        };
+      })
+    );
+
+    return results;
   }
 
   static async getStudentsForAttendance(courseId: number, sectionId: number, date?: string, periodNumber?: number) {
-    const studentCourses = await StudentCourse.findAll({
+    // Tier 1: Match studentcourse by exact courseId & sectionId
+    let studentCourses = await StudentCourse.findAll({
       where: { courseId, sectionId },
       include: [{ model: StudentDetails, as: 'studentDetails' }],
     });
 
+    // Tier 2: Match studentcourse by courseId alone
+    if (!studentCourses || studentCourses.length === 0) {
+      studentCourses = await StudentCourse.findAll({
+        where: { courseId },
+        include: [{ model: StudentDetails, as: 'studentDetails' }],
+      });
+    }
+
     let rawStudents: Array<{ studentId: number; registerNumber: string; studentName: string }> = [];
 
+    // Tier 3: Fallback to all student_details if no course mapping found
     if (!studentCourses || studentCourses.length === 0) {
-      const students = await StudentDetails.findAll({ limit: 40 });
+      const students = await StudentDetails.findAll({ order: [['registerNumber', 'ASC']], limit: 50 });
       rawStudents = students.map((s) => ({
         studentId: s.studentId,
         registerNumber: s.registerNumber,

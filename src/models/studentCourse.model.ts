@@ -23,7 +23,7 @@ StudentCourse.init(
   },
   {
     sequelize,
-    tableName: 'StudentCourse',
+    tableName: 'studentcourse',
     timestamps: true,
   },
 );

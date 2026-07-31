@@ -8,6 +8,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { TimetableController } from '../controllers/timetable.controller';
 import { AttendanceController } from '../controllers/attendance.controller';
+import { NotificationController } from '../controllers/notification.controller';
 import { authenticateJWT } from '../middlewares/authenticateJwt.middleware';
 
 const router = Router();
@@ -24,5 +25,10 @@ router.get('/students-for-attendance', authenticateJWT, TimetableController.getS
 router.post('/submit-attendance', authenticateJWT, AttendanceController.submitAttendance);
 router.get('/copy-attendance', authenticateJWT, AttendanceController.copyAttendance);
 router.get('/filter-attendance-records', authenticateJWT, AttendanceController.filterAttendanceRecords);
+
+// Notifications Module
+router.get('/notifications', authenticateJWT, NotificationController.getNotifications);
+router.put('/notifications/:id/read', authenticateJWT, NotificationController.markAsRead);
+router.post('/trigger-cron-test', authenticateJWT, NotificationController.triggerCronTest);
 
 export default router;

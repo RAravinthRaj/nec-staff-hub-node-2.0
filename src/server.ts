@@ -20,6 +20,7 @@ import { sequelize } from './config/database';
 import { authenticateJWT } from './middlewares/authenticateJwt.middleware';
 import { bodySizeLimit, helmetMiddleware, httpsRedirect, rate_limiter } from './middlewares';
 import './models'; // Import models to ensure associations are registered before sync
+import { NotificationService } from './services/notification.service';
 
 const restApp = express();
 const graphqlApp = express();
@@ -59,6 +60,9 @@ async function syncDatabase() {
     // Automatically sync models & create tables if they do not exist
     await sequelize.sync();
     logger.info('🚀 Database tables synced successfully');
+
+    // Initialize 5:00 PM IST Notification Cron Job
+    NotificationService.initCronJob();
   } catch (error) {
     logger.error('❌ Sequelize sync error:', error);
     process.exit(1);
@@ -117,10 +121,10 @@ async function startServer() {
 
   graphqlApp.use(
     '/graphql',
-    authenticateJWT,
-    expressMiddleware(graphqlServer, {
-      context: async ({ req }) => ({ req }),
-    }),
+    authenticateJWT as any,
+    expressMiddleware(graphqlServer as any, {
+      context: async ({ req }: any) => ({ req }),
+    }) as any,
   );
 
   restApp.listen(config.restPort, '0.0.0.0', () => {

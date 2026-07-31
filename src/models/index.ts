@@ -55,12 +55,17 @@ StudentCourse.belongsTo(StudentDetails, { foreignKey: 'regno', targetKey: 'regis
 StudentCourse.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 StudentCourse.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
 
+import { NotificationModel } from './notification.model';
+
 // PeriodAttendance Associations
 PeriodAttendance.belongsTo(StudentDetails, { foreignKey: 'regno', targetKey: 'registerNumber', as: 'studentDetails' });
 PeriodAttendance.belongsTo(User, { foreignKey: 'staffId', as: 'staff' });
 PeriodAttendance.belongsTo(Course, { foreignKey: 'courseId', as: 'course' });
 PeriodAttendance.belongsTo(Section, { foreignKey: 'sectionId', as: 'section' });
 PeriodAttendance.belongsTo(Department, { foreignKey: 'departmentId', as: 'department' });
+
+NotificationModel.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(NotificationModel, { foreignKey: 'userId', as: 'notifications' });
 
 export {
   Role,
@@ -77,4 +82,5 @@ export {
   Semester,
   Timetable,
   PeriodAttendance,
+  NotificationModel,
 };

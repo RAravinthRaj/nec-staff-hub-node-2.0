@@ -13,6 +13,11 @@ import { authenticateJWT } from '../middlewares/authenticateJwt.middleware';
 
 const router = Router();
 
+// Health Check Endpoint for Cloud Deployments
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() });
+});
+
 router.post('/send-otp', AuthController.sendOTP);
 router.post('/google-login', AuthController.googleLogin);
 router.post('/verify-otp', AuthController.verifyOTP);

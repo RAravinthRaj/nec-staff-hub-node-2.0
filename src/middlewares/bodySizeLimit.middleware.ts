@@ -9,6 +9,7 @@ import { Request, Response, NextFunction } from 'express';
 import { config } from '../config/config';
 
 export const bodySizeLimit = (req: Request, res: Response, next: NextFunction) => {
-  req.setTimeout(config.rateLimitMinutes * 1000);
+  // Set socket request timeout to 2 minutes (120,000 ms)
+  req.setTimeout(120 * 1000);
   next();
 };

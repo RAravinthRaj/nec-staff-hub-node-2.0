@@ -64,18 +64,18 @@ export const config: Config = {
   valKeyHost: process.env.VALKEY_HOST || '',
   valKeyPort: Number(process.env.VALKEY_PORT),
   valKeyUser: process.env.VALKEY_USER || '',
-  valKeyPassword: process.env.VAKKEY_PASSWORD || '',
+  valKeyPassword: process.env.VALKEY_PASSWORD || process.env.VAKKEY_PASSWORD || '',
 
   appPort: Number(process.env.PORT) || Number(process.env.APP_PORT) || Number(process.env.REST_PORT) || 3000,
-  restPort: Number(process.env.REST_PORT) || 3000,
-  graphqlPort: Number(process.env.GRAPHQL_PORT) || 3001,
+  restPort: Number(process.env.REST_PORT) || Number(process.env.PORT) || 3000,
+  graphqlPort: Number(process.env.GRAPHQL_PORT) || Number(process.env.PORT) || 3001,
 
   smtpUserName: process.env.SMTP_USER_NAME || '',
   smtpPassword: process.env.SMTP_PASSWORD || '',
 
-  jwtSecretKey: process.env.JWT_SECRET || '',
-  jwtExpiryTime: process.env.JWT_EXPIRES_IN || ' ',
-  jwtSignInExpiryTime: process.env.JWT_SIGN_IN_EXPIRES_IN || ' ',
+  jwtSecretKey: process.env.JWT_SECRET || 'nec-staff-hub-secret-key-2025',
+  jwtExpiryTime: process.env.JWT_EXPIRES_IN || '7d',
+  jwtSignInExpiryTime: process.env.JWT_SIGN_IN_EXPIRES_IN || '7d',
 
   imageApiKey: process.env.IMG_BB_API_KEY || '',
   otpHashSecret: process.env.OTP_HASH_SECRET || '',

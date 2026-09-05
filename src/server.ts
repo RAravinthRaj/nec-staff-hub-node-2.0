@@ -22,33 +22,40 @@ import { bodySizeLimit, helmetMiddleware, httpsRedirect, rate_limiter } from './
 import './models'; // Import models to ensure associations are registered before sync
 import { NotificationService } from './services/notification.service';
 
+const app = express();
 const restApp = express();
 const graphqlApp = express();
 
 let dbConnection: mysql.Connection;
 
-async function connectMySQL() {
-  try {
-    dbConnection = await mysql.createConnection({
-      host: config.mySqlHost,
-      port: config.mySqlPort,
-      user: config.mySqlUser,
-      password: config.mySqlPassword,
-      database: config.mySqlDatabaseName,
+async function connectMySQL(retries = 3, delayMs = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      dbConnection = await mysql.createConnection({
+        host: config.mySqlHost,
+        port: config.mySqlPort,
+        user: config.mySqlUser,
+        password: config.mySqlPassword,
+        database: config.mySqlDatabaseName,
 
-      ssl: config.mySqlCertificate
-        ? {
-            ca: config.mySqlCertificate?.replace(/\\n/g, '\n'),
-            rejectUnauthorized: true,
-          }
-        : undefined,
-    });
+        ssl: config.mySqlCertificate
+          ? {
+              ca: config.mySqlCertificate?.replace(/\\n/g, '\n'),
+              rejectUnauthorized: true,
+            }
+          : undefined,
+      });
 
-    logger.info('🚀 MySQL Database connected successfully');
-    return dbConnection;
-  } catch (err: any) {
-    logger.error(`MySQL connection error: ${err}`);
-    process.exit(1);
+      logger.info('🚀 MySQL Database connected successfully');
+      return dbConnection;
+    } catch (err: any) {
+      logger.error(`MySQL connection error (Attempt ${i}/${retries}): ${err.message || err}`);
+      if (i === retries) {
+        logger.error('❌ Failed to connect to MySQL after maximum retries.');
+        process.exit(1);
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 }
 
@@ -114,26 +121,64 @@ async function startServer() {
 
   await graphqlServer.start();
 
-  applyCommonMiddleware(restApp);
-  applyCommonMiddleware(graphqlApp);
+  const isSinglePortDeployment =
+    !process.env.REST_PORT ||
+    !process.env.GRAPHQL_PORT ||
+    config.restPort === config.graphqlPort ||
+    Boolean(process.env.PORT);
 
-  restApp.use('/rest', router);
+  if (isSinglePortDeployment) {
+    applyCommonMiddleware(app);
 
-  graphqlApp.use(
-    '/graphql',
-    authenticateJWT as any,
-    expressMiddleware(graphqlServer as any, {
-      context: async ({ req }: any) => ({ req }),
-    }) as any,
-  );
+    // Root Health check for cloud deployment platforms
+    app.get('/health', (req, res) => {
+      res.status(200).json({ status: 'UP', service: 'NEC Staff Hub Backend', timestamp: new Date().toISOString() });
+    });
 
-  restApp.listen(config.restPort, '0.0.0.0', () => {
-    logger.info(`🚀 REST available at http://localhost:${config.restPort}/rest`);
-  });
+    app.use('/rest', router);
+    app.use(
+      '/graphql',
+      authenticateJWT as any,
+      expressMiddleware(graphqlServer as any, {
+        context: async ({ req }: any) => ({ req }),
+      }) as any,
+    );
 
-  graphqlApp.listen(config.graphqlPort, '0.0.0.0', () => {
-    logger.info(`🚀 GRAPHQL available at http://localhost:${config.graphqlPort}/graphql`);
-  });
+    app.listen(config.appPort, '0.0.0.0', () => {
+      logger.info(`🚀 Backend Unified Server running on http://0.0.0.0:${config.appPort}`);
+      logger.info(`   ├── REST API: http://localhost:${config.appPort}/rest`);
+      logger.info(`   └── GraphQL API: http://localhost:${config.appPort}/graphql`);
+    });
+  } else {
+    applyCommonMiddleware(restApp);
+    applyCommonMiddleware(graphqlApp);
+
+    restApp.get('/health', (req, res) => {
+      res.status(200).json({ status: 'UP', service: 'REST API', timestamp: new Date().toISOString() });
+    });
+
+    graphqlApp.get('/health', (req, res) => {
+      res.status(200).json({ status: 'UP', service: 'GraphQL API', timestamp: new Date().toISOString() });
+    });
+
+    restApp.use('/rest', router);
+
+    graphqlApp.use(
+      '/graphql',
+      authenticateJWT as any,
+      expressMiddleware(graphqlServer as any, {
+        context: async ({ req }: any) => ({ req }),
+      }) as any,
+    );
+
+    restApp.listen(config.restPort, '0.0.0.0', () => {
+      logger.info(`🚀 REST available at http://localhost:${config.restPort}/rest`);
+    });
+
+    graphqlApp.listen(config.graphqlPort, '0.0.0.0', () => {
+      logger.info(`🚀 GRAPHQL available at http://localhost:${config.graphqlPort}/graphql`);
+    });
+  }
 }
 
 (async function bootstrap() {

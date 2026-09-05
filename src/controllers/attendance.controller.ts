@@ -11,7 +11,7 @@ export class AttendanceController {
   static async submitAttendance(req: Request, res: Response) {
     try {
       const authUser = (req as any).user;
-      const staffId = authUser?.staffId || authUser?.userId || 1;
+      const staffId = authUser?.userId || authUser?.id || authUser?.staffId || 1;
       const { courseId, sectionId, periodNumber, attendanceDate, records, dayOfWeek, semesterNumber, departmentId } = req.body;
 
       if (!attendanceDate || !records || !Array.isArray(records)) {

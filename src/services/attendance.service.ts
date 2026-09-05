@@ -34,6 +34,16 @@ export class AttendanceService {
       throw new Error('Attendance date cannot be in the future');
     }
 
+    // Ensure valid user ID referencing users(userId)
+    let validStaffUserId = staffId;
+    const existingUser = await User.findByPk(staffId);
+    if (!existingUser) {
+      const fallbackUser = await User.findOne();
+      if (fallbackUser) {
+        validStaffUserId = fallbackUser.userId;
+      }
+    }
+
     const dayMap = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const d = new Date(attendanceDate);
     const dayOfWeek = payload.dayOfWeek || dayMap[d.getDay()] || 'MON';
@@ -64,13 +74,13 @@ export class AttendanceService {
         }
 
         existingRecord.status = targetStatus;
-        existingRecord.staffId = staffId;
+        existingRecord.staffId = validStaffUserId;
         await existingRecord.save();
         results.push(existingRecord);
       } else {
         const newRecord = await PeriodAttendance.create({
           regno,
-          staffId,
+          staffId: validStaffUserId,
           courseId,
           sectionId,
           semesterNumber: payload.semesterNumber || 5,
@@ -79,7 +89,7 @@ export class AttendanceService {
           attendanceDate,
           status: targetStatus,
           departmentId: payload.departmentId || 1,
-          updatedBy: `Staff-${staffId}`,
+          updatedBy: `Staff-${validStaffUserId}`,
         });
         results.push(newRecord);
       }

@@ -91,6 +91,11 @@ function applyCommonMiddleware(app: Express) {
     }),
   );
 
+  app.use((req, res, next) => {
+    logger.info(`[HTTP] ${req.method} ${req.originalUrl}`);
+    next();
+  });
+
   app.use(jsonBodyParser);
   app.use(bodyParserJson);
   app.use(urlEncodedBodyParser);

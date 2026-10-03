@@ -127,15 +127,34 @@ export class TimetableService {
     }
 
     let attendanceMap: Record<string, string> = {};
-    if (date && periodNumber) {
-      const pastRecords = await PeriodAttendance.findAll({
-        where: {
-          attendanceDate: date,
-          periodNumber,
-          courseId,
-          sectionId,
-        },
+    if (date) {
+      const formattedDate = date.includes('.') ? date.split('.').reverse().join('-') : date;
+      const whereClause: any = {
+        attendanceDate: formattedDate,
+        courseId,
+      };
+      if (periodNumber) {
+        whereClause.periodNumber = periodNumber;
+      }
+      if (sectionId) {
+        whereClause.sectionId = sectionId;
+      }
+
+      let pastRecords = await PeriodAttendance.findAll({
+        where: whereClause,
       });
+
+      // Fallback: If no records found with sectionId, query without sectionId filter
+      if ((!pastRecords || pastRecords.length === 0) && sectionId) {
+        delete whereClause.sectionId;
+        pastRecords = await PeriodAttendance.findAll({ where: whereClause });
+      }
+
+      // Fallback 2: If no records found with periodNumber, query without periodNumber filter
+      if ((!pastRecords || pastRecords.length === 0) && periodNumber) {
+        delete whereClause.periodNumber;
+        pastRecords = await PeriodAttendance.findAll({ where: whereClause });
+      }
 
       pastRecords.forEach((rec) => {
         const s = rec.status === 'P' ? 'PRESENT' : rec.status === 'OD' ? 'OD' : 'ABSENT';

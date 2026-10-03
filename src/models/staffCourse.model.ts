@@ -25,7 +25,7 @@ StaffCourse.init(
   },
   {
     sequelize,
-    tableName: 'staffcourse',
+    tableName: 'StaffCourse',
     timestamps: true,
   },
 );
